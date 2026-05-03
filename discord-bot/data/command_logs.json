@@ -38,5 +38,25 @@
     "args": "[\"https://discord.gg/cdl\"]",
     "executed_at": "2026-05-03T03:14:16.152Z",
     "success": 0
+  },
+  {
+    "id": 5,
+    "user_id": "1247947217260515398",
+    "user_tag": "trashboyxz",
+    "guild_id": "1480837982171693159",
+    "command": "help",
+    "args": "[]",
+    "executed_at": "2026-05-03T03:16:04.692Z",
+    "success": 1
+  },
+  {
+    "id": 6,
+    "user_id": "1247947217260515398",
+    "user_tag": "trashboyxz",
+    "guild_id": "1480837982171693159",
+    "command": "clone",
+    "args": "[\"https://discord.gg/cdl\"]",
+    "executed_at": "2026-05-03T03:17:08.817Z",
+    "success": 0
   }
 ]

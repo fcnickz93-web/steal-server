@@ -2,7 +2,7 @@ const logger = require('../utils/logger');
 const config = require('../config/config');
 
 module.exports = {
-  name: 'ready',
+  name: 'clientReady',
   once: true,
   execute(client) {
     logger.info(`Bot online como ${client.user.tag}`);
@@ -11,12 +11,7 @@ module.exports = {
 
     client.user.setPresence({
       status: 'online',
-      activities: [
-        {
-          name: `${config.prefix}help | Server Cloner`,
-          type: 3,
-        },
-      ],
+      activities: [{ name: `${config.prefix}help | Server Cloner`, type: 3 }],
     });
   },
 };

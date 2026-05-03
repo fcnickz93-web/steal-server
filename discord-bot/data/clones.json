@@ -20,5 +20,16 @@
     "cloned_at": "2026-05-03T03:14:16.149Z",
     "status": "completed",
     "details": "{\"roles\":{\"created\":0,\"failed\":0},\"categories\":{\"created\":0,\"failed\":0},\"channels\":{\"created\":0,\"failed\":0},\"emojis\":{\"created\":0,\"failed\":0},\"errors\":[]}"
+  },
+  {
+    "id": 3,
+    "source_guild_id": "777657136137764874",
+    "source_guild_name": "CDL",
+    "target_guild_id": "1480837982171693159",
+    "target_guild_name": "CDL",
+    "cloned_by": "1247947217260515398",
+    "cloned_at": "2026-05-03T03:17:08.815Z",
+    "status": "completed",
+    "details": "{\"roles\":{\"created\":0,\"failed\":0},\"categories\":{\"created\":0,\"failed\":0},\"channels\":{\"created\":0,\"failed\":0},\"emojis\":{\"created\":0,\"failed\":0},\"stickers\":{\"created\":0,\"failed\":0},\"errors\":[]}"
   }
 ]
