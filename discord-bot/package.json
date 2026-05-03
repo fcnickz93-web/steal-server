@@ -1,0 +1,27 @@
+{
+  "name": "discord-server-cloner",
+  "version": "1.0.0",
+  "description": "Bot Discord profissional para clonar servidores via comandos de prefixo",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
+    "winston": "^3.13.0",
+    "node-fetch": "^2.7.0",
+    "better-sqlite3": "^11.1.2",
+    "axios": "^1.7.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4",
+    "eslint": "^9.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}
