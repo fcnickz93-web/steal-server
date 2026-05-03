@@ -1,91 +1,103 @@
-const Database = require('better-sqlite3');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
 const config = require('../config/config');
 const logger = require('../utils/logger');
 
-const dbDir = path.dirname(config.databasePath);
+const dbDir = path.dirname(path.resolve(config.databasePath));
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
-const db = new Database(config.databasePath);
+const FILES = {
+  clones: path.join(dbDir, 'clones.json'),
+  snapshots: path.join(dbDir, 'snapshots.json'),
+  commandLogs: path.join(dbDir, 'command_logs.json'),
+};
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+function readFile(file) {
+  try {
+    if (!fs.existsSync(file)) return [];
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return [];
+  }
+}
+
+function writeFile(file, data) {
+  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+}
+
+function nextId(records) {
+  if (!records.length) return 1;
+  return Math.max(...records.map((r) => r.id)) + 1;
+}
 
 function init() {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS clones (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      source_guild_id TEXT,
-      source_guild_name TEXT,
-      target_guild_id TEXT NOT NULL,
-      target_guild_name TEXT NOT NULL,
-      cloned_by TEXT NOT NULL,
-      cloned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      status TEXT DEFAULT 'completed',
-      details TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS snapshots (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      guild_id TEXT NOT NULL,
-      guild_name TEXT NOT NULL,
-      created_by TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      snapshot_data TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS command_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      user_tag TEXT NOT NULL,
-      guild_id TEXT,
-      command TEXT NOT NULL,
-      args TEXT,
-      executed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      success INTEGER DEFAULT 1
-    );
-  `);
-  logger.info('Banco de dados inicializado com sucesso.');
+  for (const file of Object.values(FILES)) {
+    if (!fs.existsSync(file)) writeFile(file, []);
+  }
+  logger.info('Banco de dados JSON inicializado com sucesso.');
 }
 
 function logCommand(userId, userTag, guildId, command, args, success = true) {
-  db.prepare(
-    `INSERT INTO command_logs (user_id, user_tag, guild_id, command, args, success)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  ).run(userId, userTag, guildId, command, JSON.stringify(args), success ? 1 : 0);
+  const logs = readFile(FILES.commandLogs);
+  logs.push({
+    id: nextId(logs),
+    user_id: userId,
+    user_tag: userTag,
+    guild_id: guildId,
+    command,
+    args: JSON.stringify(args),
+    executed_at: new Date().toISOString(),
+    success: success ? 1 : 0,
+  });
+  if (logs.length > 1000) logs.splice(0, logs.length - 1000);
+  writeFile(FILES.commandLogs, logs);
 }
 
 function saveClone(data) {
-  return db.prepare(
-    `INSERT INTO clones (source_guild_id, source_guild_name, target_guild_id, target_guild_name, cloned_by, status, details)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(
-    data.sourceGuildId || null,
-    data.sourceGuildName || null,
-    data.targetGuildId,
-    data.targetGuildName,
-    data.clonedBy,
-    data.status || 'completed',
-    JSON.stringify(data.details || {})
-  );
+  const clones = readFile(FILES.clones);
+  const record = {
+    id: nextId(clones),
+    source_guild_id: data.sourceGuildId || null,
+    source_guild_name: data.sourceGuildName || null,
+    target_guild_id: data.targetGuildId,
+    target_guild_name: data.targetGuildName,
+    cloned_by: data.clonedBy,
+    cloned_at: new Date().toISOString(),
+    status: data.status || 'completed',
+    details: JSON.stringify(data.details || {}),
+  };
+  clones.push(record);
+  writeFile(FILES.clones, clones);
+  return { lastInsertRowid: record.id };
 }
 
 function saveSnapshot(guildId, guildName, createdBy, snapshotData) {
-  return db.prepare(
-    `INSERT INTO snapshots (guild_id, guild_name, created_by, snapshot_data)
-     VALUES (?, ?, ?, ?)`
-  ).run(guildId, guildName, createdBy, JSON.stringify(snapshotData));
+  const snapshots = readFile(FILES.snapshots);
+  const record = {
+    id: nextId(snapshots),
+    guild_id: guildId,
+    guild_name: guildName,
+    created_by: createdBy,
+    created_at: new Date().toISOString(),
+    snapshot_data: JSON.stringify(snapshotData),
+  };
+  snapshots.push(record);
+  writeFile(FILES.snapshots, snapshots);
+  return { lastInsertRowid: record.id };
 }
 
 function getSnapshots(guildId) {
-  return db.prepare(
-    `SELECT id, guild_name, created_by, created_at FROM snapshots WHERE guild_id = ? ORDER BY created_at DESC LIMIT 10`
-  ).all(guildId);
+  const snapshots = readFile(FILES.snapshots);
+  return snapshots
+    .filter((s) => s.guild_id === guildId)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 10)
+    .map(({ id, guild_name, created_by, created_at }) => ({ id, guild_name, created_by, created_at }));
 }
 
 function getSnapshot(id) {
-  const row = db.prepare(`SELECT * FROM snapshots WHERE id = ?`).get(id);
+  const snapshots = readFile(FILES.snapshots);
+  const row = snapshots.find((s) => s.id === id);
   if (!row) return null;
   return { ...row, snapshot_data: JSON.parse(row.snapshot_data) };
 }
