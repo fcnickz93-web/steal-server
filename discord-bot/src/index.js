@@ -31,7 +31,6 @@ process.on('SIGINT', () => {
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildEmojisAndStickers,
     GatewayIntentBits.MessageContent,
